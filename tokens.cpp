@@ -8,8 +8,18 @@ using std::cout;
 using std::string;
 using std::vector;
 
-vector<Token> tokenize(string) {
+Token::Token(TokenType type, string value, int line, int col)
+    : type(type), value(value), line(line), col(col) {}
+
+vector<Token> tokenize(string str) {
+  int line = 0;
+  char c;
+  string buf = "";
   vector<Token> tokens;
+  TokenType type = IDENTIFIER;
+  for (char c : str)
+    match(c, buf, line, type, tokens);
+
   return tokens;
 }
 
@@ -17,58 +27,46 @@ vector<Token> tokenize(ifstream &file) {
   int line = 0;
   char c;
   string buf = "";
-  Token token = Token();
-  token.type = IDENTIFIER;
   vector<Token> tokens;
+  TokenType type = IDENTIFIER;
 
   while (file.get(c))
-    match(c, buf, line, token, tokens);
+    match(c, buf, line, type, tokens);
 
   return tokens;
 }
 
-void match(char c, string &buf, int &line, Token &token, vector<Token> &tokens) {
+void match(char c, string &buf, int &line, TokenType &type,
+           vector<Token> &tokens) {
   if (c == ' ') {
-    token.value = buf;
-    tokens.push_back(token);
-    token = Token();
+    if (!buf.empty())
+      tokens.emplace_back(type, buf, line, 0);
     buf.clear();
     return;
   }
   if (c == '\n' || c == '\r') {
-    token.value = buf;
-    tokens.push_back(token);
-    token = Token();
-    Token newlineToken;
-    newlineToken.type = KEYWORD;
-    newlineToken.value = "newline";
-    newlineToken.line = line;
-    tokens.push_back(newlineToken);
+    if (!buf.empty())
+      tokens.emplace_back(type, buf, line, 0);
+    tokens.emplace_back(KEYWORD, "newline", line, 0);
     line++;
     buf.clear();
     return;
   }
   if (symbols.find(c) != symbols.end()) {
-    token.value = buf;
-    tokens.push_back(token);
-    token = Token();
-    Token symbolToken;
+    tokens.emplace_back(type, buf, line, 0);
     string value = "";
     value.push_back(c);
-    symbolToken.type = SYMBOL;
-    symbolToken.value = value;
-    symbolToken.line = line;
-    tokens.push_back(symbolToken);
+    tokens.emplace_back(SYMBOL, value, line, 0);
+    buf.clear();
     return;
   }
 
   buf.push_back(c);
 
-  if (!isalnum(c))
-    token.type = INVALID;
-
   if (keywords.find(buf) != keywords.end())
-    token.type = KEYWORD;
+    type = KEYWORD;
+  else
+    type = IDENTIFIER;
 }
 
 void printTokens(vector<Token> tokens) {

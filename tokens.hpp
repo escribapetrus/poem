@@ -20,6 +20,8 @@ struct Token {
     string value;
     int line;
     int col;
+
+    Token(TokenType type, string value, int line, int col);
 };
 
 const unordered_set<string> keywords {
@@ -34,6 +36,6 @@ vector<Token> tokenize(string);
 
 vector<Token> tokenize(ifstream&);
 
-void match(char c, string &buf, int &line, Token &token, vector<Token> &tokens); 
+void match(char c, string &buf, int &line, TokenType &type, vector<Token> &tokens);
 
 void printTokens(vector<Token> tokens);
